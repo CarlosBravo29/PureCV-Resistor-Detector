@@ -1,7 +1,7 @@
 import cv2 as cv
 import numpy as np
 
-# Function to rescale imagen
+# Image resizing function
 def rescaleFrame(frame, scale = 0.15):
     width = int(frame.shape[1] * scale)
     height = int(frame.shape[0] * scale)
@@ -9,7 +9,7 @@ def rescaleFrame(frame, scale = 0.15):
     dimensions = (width, height)
     return cv.resize(frame, dimensions, interpolation=cv.INTER_AREA)
 
-# This function returns the original img reesclaed and the hsv equalize the V value 
+# Resizes frame, applies Gaussian blur, and performs histogram equalization on the V channel 
 def prepareIMG(img, scale = 0.15):
     img = rescaleFrame(img, scale)
     blur = cv.GaussianBlur(img, (7, 7), 0)
@@ -19,6 +19,7 @@ def prepareIMG(img, scale = 0.15):
     hsv_equalized = cv.merge((h, s, equalize_v))
     return img, hsv_equalized
 
+# Isolates pixels within a color range and applies morphological closing to remove noise/gaps
 def apply_main_mask(img, mask_tuple):
     mask = cv.inRange(img, np.array(mask_tuple[0]), np.array(mask_tuple[1]))
     img_masked = cv.bitwise_and(img, img, mask=mask)
@@ -27,6 +28,7 @@ def apply_main_mask(img, mask_tuple):
     img_mClosed_masked = cv.bitwise_and(mask_closed, mask_closed, mask=mask_closed)
     return img_masked, img_mClosed_masked
 
+# Detects and combines masks for different resistor colors into a single binary image
 def detect_main_bodies(img):
     resistor_masks = {
         "mask_green_res" : ([40, 23, 0], [100, 145, 15]),
@@ -39,6 +41,7 @@ def detect_main_bodies(img):
         main_mask = cv.bitwise_or(main_mask, closed)
     return main_mask
 
+# Validates if a contour matches expected resistor dimensions and shape properties
 def is_resistor(countour):
     x, y, w, h = cv.boundingRect(countour)
     aspect_ratio = float(w) / h
@@ -61,6 +64,7 @@ def is_resistor(countour):
         return False
     return True
 
+# Extracts valid contours and draws rotated bounding boxes around detected resistors
 def drw_recs(main_mask, img):
     contours, _ = cv.findContours(main_mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
     print(f"Total contours {len(contours)}")
@@ -77,19 +81,3 @@ def drw_recs(main_mask, img):
             print("Failed")
             continue
     return img
-
-# img_f = cv.imread('imagenes/components.jpg')
-# img_f, img_hsv = prepareIMG(img_f)
-# #masked, mC_masked = apply_main_mask(img_hsv, )
-# main_masked = detect_main_bodies(img_hsv)
-
-# cv.imshow("Original", img_f)
-# cv.imshow("hsv", img_hsv)
-# cv.imshow("masked", main_masked)
-# detected = drw_recs(main_masked, img_f)
-# cv.imshow("rect", img_f)
-
-#cv.imshow("mask", masked)
-#cv.imshow("mask_MC", mC_masked)
-
-cv.waitKey(0)
