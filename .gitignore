@@ -1,0 +1,6 @@
+venv/
+*.log
+.env
+__pycache__/
+read_img.py
+imagenes/
