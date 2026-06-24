@@ -2,5 +2,6 @@ venv/
 *.log
 .env
 __pycache__/
-read_img.py
+test_old.py
+config.py
 imagenes/
